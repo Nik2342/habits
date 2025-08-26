@@ -130,10 +130,13 @@ jobs:
 
       - name: Deploy to server
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "
-            echo 'Using deploy path: ${{ secrets.DEPLOY_PATH }}'
-            docker compose -f ${{ secrets.DEPLOY_PATH }}/docker-compose.yml --env-file ${{ secrets.DEPLOY_PATH }}/.env down && \
-            docker compose -f ${{ secrets.DEPLOY_PATH }}/docker-compose.yml --env-file ${{ secrets.DEPLOY_PATH }}/.env pull && \
-            docker compose -f $DEPLOY_PATH/docker-compose.yml --env-file $DEPLOY_PATH/.env build
-            docker compose -f ${{ secrets.DEPLOY_PATH }}/docker-compose.yml --env-file ${{ secrets.DEPLOY_PATH }}/.env up -d
-          "
+              ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "
+                echo 'Using deploy path: ${{ secrets.DEPLOY_PATH }}'
+                cd ${{ secrets.DEPLOY_PATH }}
+          
+                docker compose down --remove-orphans
+          
+                docker compose pull 2>/dev/null || true
+          
+                docker compose up -d --build
+              "
