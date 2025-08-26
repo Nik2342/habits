@@ -126,18 +126,26 @@ jobs:
           ls -la '${{ secrets.DEPLOY_PATH }}/.env'
           echo 'File created successfully'
           "
-
+          
 
       - name: Deploy to server
         run: |
               ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "
-                echo 'Using deploy path: ${{ secrets.DEPLOY_PATH }}'
+                echo '=== BEFORE CLEANUP ==='
+                docker ps -a --filter 'name=www-'
+                docker network ls | grep www || true
+                docker volume ls | grep www || true
+      
+                echo '=== CLEANING UP ==='
                 cd ${{ secrets.DEPLOY_PATH }}
-          
-                docker rm -f www-db-1 www-redis-1 www-web-1 www-celery-1 www-celery_beat-1 2>/dev/null || true          
-                
-                docker compose down --remove-orphans 2>/dev/null || true
-          
+                docker compose down --rmi all --volumes --remove-orphans
+                docker network rm www_default 2>/dev/null || true
+      
+                echo '=== AFTER CLEANUP ==='  
+                docker ps -a --filter 'name=www-'
+                docker network ls | grep www || true
+      
+                echo '=== STARTING ==='
                 docker compose up -d --build
               "
           
