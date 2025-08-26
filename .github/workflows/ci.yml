@@ -134,9 +134,10 @@ jobs:
                 echo 'Using deploy path: ${{ secrets.DEPLOY_PATH }}'
                 cd ${{ secrets.DEPLOY_PATH }}
           
-                docker compose down --remove-orphans
+              docker rm -f www-db-1 www-redis-1 www-web-1 www-celery-1 www-celery_beat-1 2>/dev/null || true          
+                
+              docker compose down --remove-orphans 2>/dev/null || true
           
-                docker compose pull 2>/dev/null || true
+              docker compose up -d --build
+            "
           
-                docker compose up -d --build
-              "
