@@ -134,5 +134,6 @@ jobs:
             echo 'Using deploy path: ${{ secrets.DEPLOY_PATH }}'
             docker compose -f ${{ secrets.DEPLOY_PATH }}/docker-compose.yml --env-file ${{ secrets.DEPLOY_PATH }}/.env down && \
             docker compose -f ${{ secrets.DEPLOY_PATH }}/docker-compose.yml --env-file ${{ secrets.DEPLOY_PATH }}/.env pull && \
-            docker compose -f ${{ secrets.DEPLOY_PATH }}/docker-compose.yml --env-file ${{ secrets.DEPLOY_PATH }}/.env up -d --no-build
+            docker compose -f $DEPLOY_PATH/docker-compose.yml --env-file $DEPLOY_PATH/.env build
+            docker compose -f ${{ secrets.DEPLOY_PATH }}/docker-compose.yml --env-file ${{ secrets.DEPLOY_PATH }}/.env up -d
           "
