@@ -12,8 +12,9 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['89.169.178.223', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ["89.169.178.223", "localhost", "127.0.0.1"]
 
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -31,8 +32,8 @@ INSTALLED_APPS = [
 ]
 
 STATICFILES_FINDERS = [
-    'django.contrib.staticfiles.finders.FileSystemFinder',
-    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    "django.contrib.staticfiles.finders.FileSystemFinder",
+    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
 ]
 
 MIDDLEWARE = [

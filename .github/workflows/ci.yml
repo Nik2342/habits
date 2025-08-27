@@ -135,10 +135,6 @@ jobs:
                 cd ${{ secrets.DEPLOY_PATH }}
       
                 docker compose down --rmi all --volumes --remove-orphans 2>/dev/null || true
-
-                docker compose up -d db redis
-          
-                echo 'Waiting for database to start...'                
                 sleep 30
                 docker compose up -d --build
 
