@@ -138,17 +138,31 @@ jobs:
               docker ps -a | grep :8000 || echo 'No docker containers on port 8000'
               "
 
-
       - name: Deploy to server
         run: |
-            ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "
-              echo 'Using deploy path: ${{ secrets.DEPLOY_PATH }}'
-              cd ${{ secrets.DEPLOY_PATH }}
-              
-              sudo kill -9 \$(sudo lsof -t -i :8000) 2>/dev/null || true
-              docker compose down --rmi all --volumes --remove-orphans
-              docker compose up -d db
-              sleep 30
-              docker compose up -d --build              
-            "
-          
+              ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "
+                echo '=== BEFORE CLEANUP ==='
+                docker ps -a --filter 'name=www-'
+                docker network ls | grep www || true
+                docker volume ls | grep www || true
+      
+                echo '=== CLEANING UP ==='
+                echo 'Using deploy path: ${{ secrets.DEPLOY_PATH }}'
+                cd ${{ secrets.DEPLOY_PATH }}
+                docker compose down --rmi all --volumes --remove-orphans
+                docker network rm www_default 2>/dev/null || true
+
+                echo '=== AFTER CLEANUP ==='  
+                docker ps -a --filter 'name=www-'
+                docker network ls | grep www || true
+      
+                echo '=== STARTING ==='
+                docker compose down --rmi all --volumes --remove-orphans 2>/dev/null || true
+
+                docker compose up -d db redis
+
+                echo 'Waiting for database to start...'                
+                sleep 30
+                docker compose up -d --build
+
+              "
