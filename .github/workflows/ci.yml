@@ -134,11 +134,11 @@ jobs:
                 echo 'Using deploy path: ${{ secrets.DEPLOY_PATH }}'
                 cd ${{ secrets.DEPLOY_PATH }}
               
+              sudo kill -9 \$(sudo lsof -t -i :8000) 2>/dev/null || true
               docker compose down --rmi all --volumes --remove-orphans
               docker compose up -d db
               sleep 30
               docker compose up -d --build
               
-
               "
           
