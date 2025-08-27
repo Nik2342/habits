@@ -138,6 +138,7 @@ jobs:
                 docker ps -a --filter 'name=www-'
                 echo '=== Existing networks ==='
                 docker network ls | grep www || true
+                sudo kill -9 \$(sudo lsof -t -i :8000) 2>/dev/null || true
                 
                 docker compose down --rmi all --volumes --remove-orphans
                 docker rm -f $(docker ps -aq --filter 'name=www-') 2>/dev/null || true
