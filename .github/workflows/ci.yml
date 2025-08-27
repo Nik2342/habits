@@ -127,18 +127,28 @@ jobs:
           echo 'File created successfully'
           "
           
+      - name: Check port 8000
+        run: |
+            ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "
+              echo '=== Processes on port 8000 ==='
+              sudo lsof -i :8000 || echo 'No processes found'
+              echo '=== Network connections on port 8000 ==='
+              sudo netstat -tlnp | grep :8000 || echo 'No connections found'
+              echo '=== Docker processes ==='
+              docker ps -a | grep :8000 || echo 'No docker containers on port 8000'
+              "
+
 
       - name: Deploy to server
         run: |
-              ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "
-                echo 'Using deploy path: ${{ secrets.DEPLOY_PATH }}'
-                cd ${{ secrets.DEPLOY_PATH }}
+            ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "
+              echo 'Using deploy path: ${{ secrets.DEPLOY_PATH }}'
+              cd ${{ secrets.DEPLOY_PATH }}
               
               sudo kill -9 \$(sudo lsof -t -i :8000) 2>/dev/null || true
               docker compose down --rmi all --volumes --remove-orphans
               docker compose up -d db
               sleep 30
-              docker compose up -d --build
-              
-              "
+              docker compose up -d --build              
+            "
           
