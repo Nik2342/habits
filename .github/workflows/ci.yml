@@ -147,15 +147,27 @@ jobs:
             echo '=== CLEANING UP ==='
             echo 'Using deploy path: ${{ secrets.DEPLOY_PATH }}'
             cd ${{ secrets.DEPLOY_PATH }}
+
+            # Останавливаем и удаляем контейнеры
             docker compose down --rmi all --volumes --remove-orphans
             docker network rm www_default 2>/dev/null || true
+
+            # ВАЖНО: Освобождаем порт 8000
+            echo '=== FREEING PORT 8000 ==='
+            sudo lsof -ti:8000 | xargs sudo kill -9 2>/dev/null || true
+            sudo fuser -k 8000/tcp 2>/dev/null || true
 
             echo '=== AFTER CLEANUP ==='  
             docker ps -a --filter 'name=www-'
             docker network ls | grep www || true
 
             echo '=== STARTING ==='
-            docker compose down --rmi all --volumes --remove-orphans 2>/dev/null || true
+            # Убедимся что порт свободен
+            if sudo lsof -i :8000; then
+              echo 'PORT 8000 IS STILL IN USE! FORCE KILLING...'
+              sudo pkill -9 -f ':8000' || true
+              sudo fuser -k 8000/tcp || true
+            fi
 
             docker compose up -d db redis
 
