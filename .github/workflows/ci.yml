@@ -152,22 +152,28 @@ jobs:
             docker compose down --rmi all --volumes --remove-orphans
             docker network rm www_default 2>/dev/null || true
 
-            # ВАЖНО: Освобождаем порт 8000
-            echo '=== FREEING PORT 8000 ==='
-            sudo lsof -ti:8000 | xargs sudo kill -9 2>/dev/null || true
-            sudo fuser -k 8000/tcp 2>/dev/null || true
+            # ВАЖНО: Освобождаем порты 80 и 8000
+            echo '=== FREEING PORTS 80 AND 8000 ==='
+            for port in 80 8000; do
+              echo \"Clearing port \$port\"
+              sudo lsof -ti:\$port | xargs sudo kill -9 2>/dev/null || true
+              sudo fuser -k \$port/tcp 2>/dev/null || true
+              sudo pkill -9 -f \":\$port\" || true
+            done
 
             echo '=== AFTER CLEANUP ==='  
             docker ps -a --filter 'name=www-'
             docker network ls | grep www || true
 
             echo '=== STARTING ==='
-            # Убедимся что порт свободен
-            if sudo lsof -i :8000; then
-              echo 'PORT 8000 IS STILL IN USE! FORCE KILLING...'
-              sudo pkill -9 -f ':8000' || true
-              sudo fuser -k 8000/tcp || true
-            fi
+            # Убедимся что порты свободны
+            for port in 80 8000; do
+              if sudo lsof -i :\$port; then
+                echo \"PORT \$port IS STILL IN USE! FORCE KILLING...\"
+                sudo pkill -9 -f \":\$port\" || true
+                sudo fuser -k \$port/tcp || true
+              fi
+            done
 
             docker compose up -d db redis
 
