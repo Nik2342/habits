@@ -72,7 +72,6 @@ jobs:
           POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
           POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
 
-
   build:
     needs: test
     runs-on: ubuntu-latest
@@ -103,16 +102,27 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Copy project files
+      - name: Copy project files (FIXED)
         run: |
-          rsync -avz --exclude='.git/' -e "ssh -o StrictHostKeyChecking=no" \
+          rsync -avz --no-o --no-g --exclude='.git/' --exclude='static/' \
+            -e "ssh -o StrictHostKeyChecking=no" \
             . \
             ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_PATH }}
+
+      - name: Create static directories on server
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "
+            mkdir -p ${{ secrets.DEPLOY_PATH }}/static/css
+            mkdir -p ${{ secrets.DEPLOY_PATH }}/static/js
+            chmod 755 ${{ secrets.DEPLOY_PATH }}/static
+            chmod 755 ${{ secrets.DEPLOY_PATH }}/static/css
+            chmod 755 ${{ secrets.DEPLOY_PATH }}/static/js
+          "
 
       - name: Create .env file on server
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "
-          cat > ${{ secrets.DEPLOY_PATH }}/.env << 'EOF'
+            cat > ${{ secrets.DEPLOY_PATH }}/.env << 'EOF'
           POSTGRES_DB=${{ secrets.POSTGRES_DB }}
           POSTGRES_USER=${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
@@ -121,48 +131,45 @@ jobs:
           SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
           DEBUG=0
           EOF
-          chmod 644 '${{ secrets.DEPLOY_PATH }}/.env'
-          chown $USER:$USER '${{ secrets.DEPLOY_PATH }}/.env'
-          ls -la '${{ secrets.DEPLOY_PATH }}/.env'
-          echo 'File created successfully'
+            chmod 644 ${{ secrets.DEPLOY_PATH }}/.env
+            echo 'File created successfully'
           "
-          
+
       - name: Check port 8000
         run: |
-            ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "
-              echo '=== Processes on port 8000 ==='
-              sudo lsof -i :8000 || echo 'No processes found'
-              echo '=== Network connections on port 8000 ==='
-              sudo netstat -tlnp | grep :8000 || echo 'No connections found'
-              echo '=== Docker processes ==='
-              docker ps -a | grep :8000 || echo 'No docker containers on port 8000'
-              "
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "
+            echo '=== Processes on port 8000 ==='
+            sudo lsof -i :8000 || echo 'No processes found'
+            echo '=== Network connections on port 8000 ==='
+            sudo netstat -tlnp | grep :8000 || echo 'No connections found'
+            echo '=== Docker processes ==='
+            docker ps -a | grep :8000 || echo 'No docker containers on port 8000'
+          "
 
       - name: Deploy to server
         run: |
-              ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "
-                echo '=== BEFORE CLEANUP ==='
-                docker ps -a --filter 'name=www-'
-                docker network ls | grep www || true
-                docker volume ls | grep www || true
-      
-                echo '=== CLEANING UP ==='
-                echo 'Using deploy path: ${{ secrets.DEPLOY_PATH }}'
-                cd ${{ secrets.DEPLOY_PATH }}
-                docker compose down --rmi all --volumes --remove-orphans
-                docker network rm www_default 2>/dev/null || true
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "
+            echo '=== BEFORE CLEANUP ==='
+            docker ps -a --filter 'name=www-'
+            docker network ls | grep www || true
+            docker volume ls | grep www || true
 
-                echo '=== AFTER CLEANUP ==='  
-                docker ps -a --filter 'name=www-'
-                docker network ls | grep www || true
-      
-                echo '=== STARTING ==='
-                docker compose down --rmi all --volumes --remove-orphans 2>/dev/null || true
+            echo '=== CLEANING UP ==='
+            echo 'Using deploy path: ${{ secrets.DEPLOY_PATH }}'
+            cd ${{ secrets.DEPLOY_PATH }}
+            docker compose down --rmi all --volumes --remove-orphans
+            docker network rm www_default 2>/dev/null || true
 
-                docker compose up -d db redis
+            echo '=== AFTER CLEANUP ==='  
+            docker ps -a --filter 'name=www-'
+            docker network ls | grep www || true
 
-                echo 'Waiting for database to start...'                
-                sleep 30
-                docker compose up -d --build
+            echo '=== STARTING ==='
+            docker compose down --rmi all --volumes --remove-orphans 2>/dev/null || true
 
-              "
+            docker compose up -d db redis
+
+            echo 'Waiting for database to start...'                
+            sleep 30
+            docker compose up -d --build
+          "
