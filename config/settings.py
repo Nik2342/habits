@@ -12,7 +12,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['89.169.178.223', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ["89.169.178.223", "localhost", "127.0.0.1"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -30,8 +30,8 @@ INSTALLED_APPS = [
 ]
 
 STATICFILES_FINDERS = [
-    'django.contrib.staticfiles.finders.FileSystemFinder',
-    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    "django.contrib.staticfiles.finders.FileSystemFinder",
+    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
 ]
 
 
@@ -66,7 +66,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE":'django.db.backends.postgresql',
+        "ENGINE": "django.db.backends.postgresql",
         "NAME": os.getenv("POSTGRES_DB"),
         "USER": os.getenv("POSTGRES_USER"),
         "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
@@ -101,10 +101,10 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
-STATIC_ROOT = os.path.join(BASE_DIR,'staticfiles')
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
+    os.path.join(BASE_DIR, "static"),
 ]
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
@@ -124,7 +124,7 @@ AUTH_USER_MODEL = "users.User"
 TELEGRAM_URL = "https://api.telegram.org/bot"
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 
-CELERY_BROKER_URL = 'redis://redis:6379/0'
+CELERY_BROKER_URL = "redis://redis:6379/0"
 
 CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND")
 
@@ -143,10 +143,9 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = '/app/media'
+MEDIA_URL = "/media/"
+MEDIA_ROOT = "/app/media"
 
 
 USE_X_FORWARDED_HOST = True
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'http')
-
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "http")
