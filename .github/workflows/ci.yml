@@ -109,14 +109,15 @@ jobs:
             . \
             ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.DEPLOY_PATH }}
 
-      - name: Create static directories on server
+      - name: Create static directories on server (with sudo)
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "
-            mkdir -p ${{ secrets.DEPLOY_PATH }}/static/css
-            mkdir -p ${{ secrets.DEPLOY_PATH }}/static/js
-            chmod 755 ${{ secrets.DEPLOY_PATH }}/static
-            chmod 755 ${{ secrets.DEPLOY_PATH }}/static/css
-            chmod 755 ${{ secrets.DEPLOY_PATH }}/static/js
+            sudo mkdir -p ${{ secrets.DEPLOY_PATH }}/static/css
+            sudo mkdir -p ${{ secrets.DEPLOY_PATH }}/static/js
+            sudo chmod 755 ${{ secrets.DEPLOY_PATH }}/static
+            sudo chmod 755 ${{ secrets.DEPLOY_PATH }}/static/css
+            sudo chmod 755 ${{ secrets.DEPLOY_PATH }}/static/js
+            sudo chown $USER:$USER ${{ secrets.DEPLOY_PATH }}/static ${{ secrets.DEPLOY_PATH }}/static/css ${{ secrets.DEPLOY_PATH }}/static/js
           "
 
       - name: Create .env file on server
