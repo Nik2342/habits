@@ -139,42 +139,27 @@ jobs:
       - name: Deploy to server
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "
-            echo '=== BEFORE CLEANUP ==='
-            docker ps -a --filter 'name=www-'
-            docker network ls | grep www || true
-            docker volume ls | grep www || true
+            echo '=== FORCEFUL CLEANUP ==='
 
-            echo '=== CLEANING UP ==='
-            echo 'Using deploy path: ${{ secrets.DEPLOY_PATH }}'
-            cd ${{ secrets.DEPLOY_PATH }}
+            # Принудительно удаляем ВСЕ контейнеры проекта
+            docker ps -a --filter 'name=www-' --format '{{.Names}}' | xargs -r docker rm -f 2>/dev/null || true
 
-            docker compose down --rmi all --volumes --remove-orphans
+            # Удаляем сети и volumes
             docker network rm www_default 2>/dev/null || true
+            docker volume ls --filter 'name=www' --format '{{.Name}}' | xargs -r docker volume rm -f 2>/dev/null || true
 
-            echo '=== FREEING PORTS 80 AND 8000 ==='
+            # Освобождаем порты
+            echo '=== FREEING PORTS ==='
             for port in 80 8000; do
               echo \"Clearing port \$port\"
-              sudo lsof -ti:\$port | xargs sudo kill -9 2>/dev/null || true
+              sudo lsof -ti:\$port | xargs -r sudo kill -9 2>/dev/null || true
               sudo fuser -k \$port/tcp 2>/dev/null || true
-              sudo pkill -9 -f \":\$port\" || true
             done
 
-            echo '=== AFTER CLEANUP ==='  
-            docker ps -a --filter 'name=www-'
-            docker network ls | grep www || true
+            echo '=== STARTING FRESH ==='
+            cd ${{ secrets.DEPLOY_PATH }}
+            docker compose up -d --build --remove-orphans
 
-            echo '=== STARTING ==='
-            for port in 80 8000; do
-              if sudo lsof -i :\$port; then
-                echo \"PORT \$port IS STILL IN USE! FORCE KILLING...\"
-                sudo pkill -9 -f \":\$port\" || true
-                sudo fuser -k \$port/tcp || true
-              fi
-            done
-
-            docker compose up -d db redis
-
-            echo 'Waiting for database to start...'                
-            sleep 30
-            docker compose up -d --build
+            echo '=== DEPLOYMENT COMPLETE ==='
+            docker ps -a
           "
