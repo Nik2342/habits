@@ -7,10 +7,10 @@ services:
     env_file:
       - .env
     volumes:
-      - .:/code
-      - static_volume:/code/static
+      - .:/app
+      - static_volume:/app/staticfiles
     ports:
-      - "8000:8000"
+      - "8001:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -21,12 +21,16 @@ services:
     image: postgres:16
     env_file:
       - .env
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     expose:
       - "5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER"]
+      test: ["CMD-SHELL", "pg_isready -h localhost"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -44,7 +48,7 @@ services:
     env_file:
       - .env
     volumes:
-      - .:/code
+      - .:/app
     depends_on:
       - db
       - redis
@@ -55,12 +59,26 @@ services:
     env_file:
       - .env
     volumes:
-      - .:/code
+      - .:/app
     depends_on:
       - db
       - redis
+
+  nginx:
+    build: ./nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./staticfiles:/app/staticfiles
+      - media_volume:/app/media
+    depends_on:
+      - web
+    restart: unless-stopped
 
 volumes:
   postgres_data:
   static_volume:
   redis_data:
+  media_volume:
+
+
